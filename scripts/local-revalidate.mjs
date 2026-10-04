@@ -58,5 +58,7 @@ function watch() {
   })
 }
 watch()
+// The listener's connection doesn't keep Node running on its own; this does.
+setInterval(() => {}, 60_000)
 
 console.log(`Watching Sanity project ${projectId}/${dataset}. Publish something in /admin and ${site} will refresh.`)
