@@ -40,17 +40,23 @@ async function revalidate(type) {
 // Publishing several fields at once fires several events; refresh once per burst.
 let timer
 let lastType = 'document'
-client.listen('*[!(_id in path("drafts.**"))]', {}, { visibility: 'query' }).subscribe({
-  next: (event) => {
-    if (event.type !== 'mutation') return
-    lastType = event.result?._type ?? event.documentId ?? 'document'
-    clearTimeout(timer)
-    timer = setTimeout(() => revalidate(lastType), 800)
-  },
-  error: (error) => {
-    console.error('Lost connection to Sanity:', error.message)
-    process.exit(1)
-  },
-})
+
+// Sanity closes idle listeners after a while; reconnect instead of exiting.
+function watch() {
+  client.listen('*[!(_id in path("drafts.**"))]', {}, { visibility: 'query' }).subscribe({
+    next: (event) => {
+      if (event.type !== 'mutation') return
+      lastType = event.result?._type ?? event.documentId ?? 'document'
+      clearTimeout(timer)
+      timer = setTimeout(() => revalidate(lastType), 800)
+    },
+    error: (error) => {
+      console.error(`Lost connection to Sanity (${error.message}), reconnecting in 5s…`)
+      setTimeout(watch, 5000)
+    },
+    complete: () => setTimeout(watch, 1000),
+  })
+}
+watch()
 
 console.log(`Watching Sanity project ${projectId}/${dataset}. Publish something in /admin and ${site} will refresh.`)
