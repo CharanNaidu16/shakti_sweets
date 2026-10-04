@@ -36,6 +36,15 @@ This copies the shop details, hours, products, story and hero photo into the adm
 
 Then run `npm run dev` and open <http://localhost:3000/admin>.
 
+**Testing "publish → site updates" on your own computer.** Sanity's webhook can't reach `localhost`, so in a second terminal run:
+
+```bash
+npm run admin:watch                         # site on http://localhost:3100
+SITE=http://localhost:3000 npm run admin:watch   # site on npm run dev
+```
+
+It watches the dataset and sends `/api/revalidate` the same signed request the real webhook sends, so a publish shows on the local site within a few seconds. The deployed site uses the real webhook and doesn't need this.
+
 ## 4. Go live (Vercel)
 
 1. Push the repo to GitHub and import it in Vercel.
